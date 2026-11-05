@@ -1,0 +1,26 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: miniauth-server
+  r2dbc:
+    url: r2dbc:h2:mem:///miniauth?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+miniauth:
+  issuer: http://localhost:8080
+  jwt:
+    expiration-seconds: 3600
+  security:
+    max-failed-attempts: 5
+    lockout-duration-minutes: 15
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
