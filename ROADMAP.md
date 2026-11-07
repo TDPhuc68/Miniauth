@@ -10,8 +10,8 @@
 | :--- | :--- | :---: | :--- |
 | **Giai đoạn 1** | Tầng Cơ sở (Clean Architecture, R2DBC Reactive DB, Exceptions) |  **HOÀN THÀNH** | [Xem chi tiết Phase 1](docs/phase1_clean_architecture_persistence.md) |
 | **Giai đoạn 2** | Động cơ Mật mã & Quản lý Token (RSA RS256, Nimbus JWT, JWKS, OIDC Discovery) |  **HOÀN THÀNH** | [Xem chi tiết Phase 2](docs/phase2_cryptography_jwt_jwks.md) |
-| **Giai đoạn 3** | Tầng Xác thực đa nhà cung cấp (Strategy Pattern & IDP Registry) | ⏳ **TIẾP THEO** | [Xem chi tiết Phase 3](docs/phase3_authentication_strategy_idp.md) |
-| **Giai đoạn 4** | Chuẩn OAuth 2.0 / OIDC Flow (Authorize Endpoint, PKCE, Token Exchange) | 📋 CHỜ XỬ LÝ | [Xem chi tiết Phase 4](docs/phase4_oauth2_oidc_pkce_flows.md) |
+| **Giai đoạn 3** | Tầng Xác thực đa nhà cung cấp (Strategy Pattern & IDP Registry) |  **HOÀN THÀNH** | [Xem chi tiết Phase 3](docs/phase3_authentication_strategy_idp.md) |
+| **Giai đoạn 4** | Chuẩn OAuth 2.0 / OIDC Flow (Authorize Endpoint, PKCE, Token Exchange) | ⏳ **TIẾP THEO** | [Xem chi tiết Phase 4](docs/phase4_oauth2_oidc_pkce_flows.md) |
 | **Giai đoạn 5** | Reactive Middleware & Audit Logging (CorrelationId, Brute-force, Audit Trail) | 📋 CHỜ XỬ LÝ | [Xem chi tiết Phase 5](docs/phase5_reactive_middleware_audit.md) |
 | **Giai đoạn 6** | Demo Client WebApp & Docker Packaging | 📋 CHỜ XỬ LÝ | [Xem chi tiết Phase 6](docs/phase6_demo_client_docker.md) |
 

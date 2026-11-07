@@ -1,6 +1,6 @@
 # 🔑 Giai đoạn 3: Tầng Xác thực đa nhà cung cấp (Strategy Pattern & IDP Registry)
 
-> **Trạng thái**: ⏳ **ĐANG THỰC HIỆN / TIẾP THEO**  
+> **Trạng thái**:  **HOÀN THÀNH**  
 > **Kiến thức kế thừa**: `gravitee-am-identityprovider` & `gravitee-am-plugins-handlers`
 
 ---
