@@ -32,14 +32,14 @@
 
 ```mermaid
 graph TD
-    subgraph Client Application (SPA / Web / Mobile)
+    subgraph SubClientApp ["Client Application (SPA / Web / Mobile)"]
         AppUI["Client App (HTML5 / JS / React)"]
     end
 
-    subgraph MiniAuth Server (Reactive IAM Core)
+    subgraph SubMiniAuth ["MiniAuth Server (Reactive IAM Core)"]
         Gateway["Reactive Filter Pipeline: CorrelationID, RateLimit, BruteForce"]
         
-        subgraph Endpoints (OIDC Core)
+        subgraph SubEndpoints ["Endpoints (OIDC Core)"]
             AuthEP["/oauth/authorize (Login & Consent UI)"]
             TokenEP["/oauth/token (Code Exchange + PKCE)"]
             JWKSEP["/.well-known/jwks.json (Public Keys)"]
@@ -47,32 +47,32 @@ graph TD
             UserEP["/userinfo (Profile Service)"]
         end
 
-        subgraph Business Core
-            AuthService[Authentication Service]
-            TokenService[JWT & Crypto Service]
-            AuditService[Audit Log Service]
-            IDPRegistry[Identity Provider Registry]
+        subgraph SubBusinessCore ["Business Core"]
+            AuthService["Authentication Service"]
+            TokenService["JWT & Crypto Service"]
+            AuditService["Audit Log Service"]
+            IDPRegistry["Identity Provider Registry"]
         end
 
-        subgraph Identity Adapters (Strategy Pattern)
-            LocalIDP[Local Database IDP - BCrypt]
-            SocialIDP[Google / Mock Social IDP]
+        subgraph SubIdentityAdapters ["Identity Adapters (Strategy Pattern)"]
+            LocalIDP["Local Database IDP - BCrypt"]
+            SocialIDP["Google / Mock Social IDP"]
         end
 
-        subgraph Ports & Adapters (Persistence)
-            UserRepoPort[UserRepository Port]
-            ClientRepoPort[ClientAppRepository Port]
-            AuditRepoPort[AuditRepository Port]
+        subgraph SubPersistencePorts ["Ports and Adapters (Persistence)"]
+            UserRepoPort["UserRepository Port"]
+            ClientRepoPort["ClientAppRepository Port"]
+            AuditRepoPort["AuditRepository Port"]
         end
     end
 
-    subgraph Database
-        R2DBC[(Reactive Database: PostgreSQL / H2)]
+    subgraph SubDatabase ["Database"]
+        R2DBC[("Reactive Database: PostgreSQL / H2")]
     end
 
-    AppUI -->|1. Redirect Login| AuthEP
-    AppUI -->|2. Exchange Code for Token| TokenEP
-    AppUI -->|3. Get Public Key to Verify JWT| JWKSEP
+    AppUI -->|"1. Redirect Login"| AuthEP
+    AppUI -->|"2. Exchange Code for Token"| TokenEP
+    AppUI -->|"3. Get Public Key to Verify JWT"| JWKSEP
 
     AuthEP --> Gateway
     TokenEP --> Gateway
