@@ -33,18 +33,18 @@ public class WellKnownController {
 
     @GetMapping("/openid-configuration")
     public Mono<Map<String, Object>> getOpenIdConfiguration() {
-        Map<String, Object> config = Map.of(
-                "issuer", issuer,
-                "authorization_endpoint", issuer + "/oauth/authorize",
-                "token_endpoint", issuer + "/oauth/token",
-                "userinfo_endpoint", issuer + "/userinfo",
-                "jwks_uri", issuer + "/.well-known/jwks.json",
-                "response_types_supported", List.of("code"),
-                "subject_types_supported", List.of("public"),
-                "id_token_signing_alg_values_supported", List.of("RS256"),
-                "scopes_supported", List.of("openid", "profile", "email"),
-                "token_endpoint_auth_methods_supported", List.of("client_secret_basic", "client_secret_post"),
-                "code_challenge_methods_supported", List.of("S256", "plain")
+        Map<String, Object> config = Map.ofEntries(
+                Map.entry("issuer", issuer),
+                Map.entry("authorization_endpoint", issuer + "/oauth/authorize"),
+                Map.entry("token_endpoint", issuer + "/oauth/token"),
+                Map.entry("userinfo_endpoint", issuer + "/userinfo"),
+                Map.entry("jwks_uri", issuer + "/.well-known/jwks.json"),
+                Map.entry("response_types_supported", List.of("code")),
+                Map.entry("subject_types_supported", List.of("public")),
+                Map.entry("id_token_signing_alg_values_supported", List.of("RS256")),
+                Map.entry("scopes_supported", List.of("openid", "profile", "email")),
+                Map.entry("token_endpoint_auth_methods_supported", List.of("client_secret_basic", "client_secret_post")),
+                Map.entry("code_challenge_methods_supported", List.of("S256", "plain"))
         );
         return Mono.just(config);
     }

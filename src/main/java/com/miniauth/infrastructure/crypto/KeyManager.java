@@ -60,8 +60,8 @@ public class KeyManager {
             this.signer = new RSASSASigner(rsaJwk);
 
             log.info("Initialized RSA 2048-bit KeyPair successfully with Key ID: {}", keyId);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Failed to generate RSA KeyPair", e);
+        } catch (NoSuchAlgorithmException | com.nimbusds.jose.JOSEException e) {
+            throw new IllegalStateException("Failed to generate RSA KeyPair and initialize Signer", e);
         }
     }
 
