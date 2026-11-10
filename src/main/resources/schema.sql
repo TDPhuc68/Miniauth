@@ -36,11 +36,28 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 
 -- Seed initial test user: username 'john_doe', password 'password123'
--- BCrypt hash for 'password123': $2a$10$wK1k6O1l7B6oO/4O9R4x2.a1uPsqjLpC6JqJtH9t1f1C/Rk8Oa8fW
-INSERT INTO users (id, username, password_hash, full_name, email, status)
-VALUES ('u-101', 'john_doe', '$2a$10$7Z418Yk8uX6q3gZ1g8hNueQ7tD5yZ0s5.R5W9B9mF9N6Q5vK6mC6S', 'John Doe', 'john.doe@example.com', 'ACTIVE');
+-- BCrypt hash for 'password123': $2a$10$jZr0UvJKLfW22Vfu8yrG6eT7oaEeToNnyKdg/usik8PxV0SZXJIvC
+INSERT INTO users (id, username, password_hash, full_name, email, status, failed_attempts)
+SELECT 'u-101', 'john_doe', '$2a$10$jZr0UvJKLfW22Vfu8yrG6eT7oaEeToNnyKdg/usik8PxV0SZXJIvC', 'John Doe', 'john.doe@example.com', 'ACTIVE', 0
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'john_doe');
+
+-- Reset và cập nhật lại mật khẩu chuẩn nếu user john_doe đã tồn tại
+UPDATE users 
+SET password_hash = '$2a$10$jZr0UvJKLfW22Vfu8yrG6eT7oaEeToNnyKdg/usik8PxV0SZXJIvC',
+    status = 'ACTIVE',
+    failed_attempts = 0,
+    locked_until = NULL
+WHERE username = 'john_doe';
 
 -- Seed initial test client application:
 -- client_id: 'demo-client', client_secret: 'demo-secret'
+-- BCrypt hash for 'demo-secret': $2a$10$2gpiRu72S3zCpTSCCtz1qe1RUgQENVQ0fzGcqpKBaFiRspiwzQ02K
 INSERT INTO client_applications (id, client_id, client_secret_hash, client_name, redirect_uris, authorized_grant_types, scopes)
-VALUES ('c-101', 'demo-client', '$2a$10$7Z418Yk8uX6q3gZ1g8hNueQ7tD5yZ0s5.R5W9B9mF9N6Q5vK6mC6S', 'Demo Web Application', 'http://localhost:3000/callback.html,http://localhost:8080/callback.html', 'authorization_code,refresh_token', 'openid,profile,email');
+SELECT 'c-101', 'demo-client', '$2a$10$2gpiRu72S3zCpTSCCtz1qe1RUgQENVQ0fzGcqpKBaFiRspiwzQ02K', 'Demo Web Application', 'http://localhost:3000/callback.html,http://localhost:8080/callback.html', 'authorization_code,refresh_token', 'openid,profile,email'
+WHERE NOT EXISTS (SELECT 1 FROM client_applications WHERE client_id = 'demo-client');
+
+-- Cập nhật secret chuẩn nếu client demo-client đã tồn tại
+UPDATE client_applications
+SET client_secret_hash = '$2a$10$2gpiRu72S3zCpTSCCtz1qe1RUgQENVQ0fzGcqpKBaFiRspiwzQ02K',
+    redirect_uris = 'http://localhost:3000/callback.html,http://localhost:8080/callback.html'
+WHERE client_id = 'demo-client';
