@@ -1,6 +1,8 @@
 package com.miniauth.infrastructure.web;
 
+import com.miniauth.core.exception.OAuth2Exception;
 import com.miniauth.core.model.TokenResponse;
+import com.miniauth.core.service.AuditService;
 import com.miniauth.core.service.OAuth2Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +21,7 @@ import java.util.Base64;
  * Controller phục vụ endpoint cấp phát Token (RFC 6749 Section 3.2):
  * POST /oauth/token
  * Hỗ trợ xác thực Client qua HTTP Basic Auth hoặc Form Data,
- * và xác minh mã kiểm tra PKCE (code_verifier).
+ * xác minh mã kiểm tra PKCE (code_verifier), và ghi vết kiểm toán Audit Trail.
  */
 @Slf4j
 @RestController
@@ -28,10 +30,12 @@ import java.util.Base64;
 public class TokenController {
 
     private final OAuth2Service oAuth2Service;
+    private final AuditService auditService;
 
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public Mono<TokenResponse> tokenEndpoint(ServerWebExchange exchange) {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        String clientIp = resolveClientIp(exchange);
 
         return exchange.getFormData().flatMap(formData -> {
             String grantType = formData.getFirst("grant_type");
@@ -57,6 +61,8 @@ public class TokenController {
                 }
             }
 
+            final String effectiveClientId = clientId != null ? clientId : "UNKNOWN_CLIENT";
+
             return oAuth2Service.exchangeCodeForToken(
                     grantType,
                     code,
@@ -64,7 +70,40 @@ public class TokenController {
                     clientId,
                     clientSecret,
                     codeVerifier
-            );
+            )
+            .doOnSuccess(tokenResponse -> {
+                // Ghi Audit Log thành công
+                auditService.recordEvent(
+                        "TOKEN_ISSUED",
+                        effectiveClientId,
+                        "TOKEN_ENDPOINT",
+                        "SUCCESS",
+                        "Issued tokens for grant_type: " + grantType,
+                        clientIp
+                );
+            })
+            .doOnError(OAuth2Exception.class, ex -> {
+                // Ghi Audit Log thất bại
+                auditService.recordEvent(
+                        "TOKEN_EXCHANGE_FAILED",
+                        effectiveClientId,
+                        "TOKEN_ENDPOINT",
+                        "FAILURE",
+                        ex.getErrorDescription(),
+                        clientIp
+                );
+            });
         });
+    }
+
+    private String resolveClientIp(ServerWebExchange exchange) {
+        String forwardedFor = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        if (exchange.getRequest().getRemoteAddress() != null) {
+            return exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
+        }
+        return "UNKNOWN_IP";
     }
 }
