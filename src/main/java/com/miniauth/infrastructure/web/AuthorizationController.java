@@ -6,6 +6,7 @@ import com.miniauth.core.model.ClientApplication;
 import com.miniauth.core.model.User;
 import com.miniauth.core.port.ClientRepository;
 import com.miniauth.core.port.UserRepository;
+import com.miniauth.core.service.AuditService;
 import com.miniauth.core.service.AuthService;
 import com.miniauth.core.service.OAuth2Service;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class AuthorizationController {
     private final AuthService authService;
     private final ClientRepository clientRepository;
     private final UserRepository userRepository;
+    private final AuditService auditService;
 
     @GetMapping
     public Mono<String> showLoginPage(
@@ -66,6 +68,8 @@ public class AuthorizationController {
 
     @PostMapping("/login")
     public Mono<String> processLogin(ServerWebExchange exchange, Model model) {
+        String clientIp = resolveClientIp(exchange);
+
         return exchange.getFormData().flatMap(formData -> {
             String username = formData.getFirst("username");
             String password = formData.getFirst("password");
@@ -95,13 +99,33 @@ public class AuthorizationController {
 
                         return authService.authenticate(authRequest)
                                 .flatMap(user -> {
-                                    // Đăng nhập thành công -> Hiển thị trang xin cấp quyền (Consent)
+                                    // Đăng nhập thành công -> Ghi Audit Log & Hiển thị trang Consent
+                                    auditService.recordEvent(
+                                            "USER_LOGIN",
+                                            user.getUsername(),
+                                            clientId,
+                                            "SUCCESS",
+                                            "User authenticated via LOCAL IDP",
+                                            clientIp
+                                    );
+
                                     model.addAttribute("userId", user.getId());
                                     model.addAttribute("username", user.getUsername());
                                     return Mono.just("consent");
                                 })
                                 .onErrorResume(OAuth2Exception.class, ex -> {
                                     log.warn("Login failed for user [{}]: {}", username, ex.getMessage());
+
+                                    // Đăng nhập thất bại -> Ghi Audit Log
+                                    auditService.recordEvent(
+                                            "USER_LOGIN",
+                                            username,
+                                            clientId,
+                                            "FAILURE",
+                                            ex.getErrorDescription(),
+                                            clientIp
+                                    );
+
                                     model.addAttribute("error", ex.getErrorDescription());
                                     return Mono.just("login");
                                 });
@@ -111,6 +135,8 @@ public class AuthorizationController {
 
     @PostMapping("/consent")
     public Mono<Void> processConsent(ServerWebExchange exchange) {
+        String clientIp = resolveClientIp(exchange);
+
         return exchange.getFormData().flatMap(formData -> {
             String decision = formData.getFirst("decision");
             String clientId = formData.getFirst("client_id");
@@ -124,6 +150,16 @@ public class AuthorizationController {
             // Nếu người dùng từ chối cấp quyền
             if (!"approve".equalsIgnoreCase(decision)) {
                 log.info("User denied consent for client: {}", clientId);
+
+                auditService.recordEvent(
+                        "CONSENT_DENIED",
+                        userId,
+                        clientId,
+                        "FAILURE",
+                        "User explicitly denied consent",
+                        clientIp
+                );
+
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(redirectUri)
                         .queryParam("error", "access_denied")
                         .queryParam("error_description", "User denied authorization consent");
@@ -153,6 +189,15 @@ public class AuthorizationController {
                         codeChallengeMethod
                 );
 
+                auditService.recordEvent(
+                        "CONSENT_GRANTED",
+                        user.getUsername(),
+                        clientId,
+                        "SUCCESS",
+                        "User approved scopes: " + scope,
+                        clientIp
+                );
+
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(redirectUri)
                         .queryParam("code", code);
                 if (state != null && !state.isBlank()) {
@@ -167,5 +212,16 @@ public class AuthorizationController {
                 return exchange.getResponse().setComplete();
             });
         });
+    }
+
+    private String resolveClientIp(ServerWebExchange exchange) {
+        String forwardedFor = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        if (exchange.getRequest().getRemoteAddress() != null) {
+            return exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
+        }
+        return "UNKNOWN_IP";
     }
 }
