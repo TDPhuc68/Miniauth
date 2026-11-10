@@ -1,6 +1,6 @@
 # 🚀 Giai đoạn 6: Ứng dụng Demo Client & Đóng gói Docker
 
-> **Trạng thái**: 📋 **CHỜ XỬ LÝ (THEO KẾ HOẠCH)**  
+> **Trạng thái**:  **HOÀN THÀNH**  
 > **Kiến thức thực chiến**: Tích hợp OAuth 2.0 / OIDC vào Single Page App (SPA) & Container hóa
 
 ---

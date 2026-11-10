@@ -15,7 +15,7 @@
 | **Giai đoạn 3** | Tầng Xác thực đa nhà cung cấp (Strategy Pattern & IDP Registry) | `main` |  **HOÀN THÀNH** | [Xem chi tiết Phase 3](docs/phase3_authentication_strategy_idp.md) |
 | **Giai đoạn 4** | Chuẩn OAuth 2.0 / OIDC Flow (Authorize Endpoint, PKCE, Token Exchange) | `feat/phase-4-oauth2-oidc-pkce` |  **HOÀN THÀNH** | [Xem chi tiết Phase 4](docs/phase4_oauth2_oidc_pkce_flows.md) |
 | **Giai đoạn 5** | Reactive Middleware & Audit Logging (CorrelationId, Brute-force, Audit Trail) | `feat/phase-5-middleware-audit` |  **HOÀN THÀNH** | [Xem chi tiết Phase 5](docs/phase5_reactive_middleware_audit.md) |
-| **Giai đoạn 6** | Demo Client WebApp & Docker Packaging | `feat/phase-6-demo-client-docker` | ⏳ **TIẾP THEO** | [Xem chi tiết Phase 6](docs/phase6_demo_client_docker.md) |
+| **Giai đoạn 6** | Demo Client WebApp & Docker Packaging | `feat/phase-6-demo-client-docker` |  **HOÀN THÀNH** | [Xem chi tiết Phase 6](docs/phase6_demo_client_docker.md) |
 
 ---
 

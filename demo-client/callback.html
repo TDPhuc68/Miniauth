@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác thực thành công - MiniAuth Demo</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+        .loading-box {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .success-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .avatar {
+            width: 56px;
+            height: 56px;
+            background: #2563eb;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .user-meta h2 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        .user-meta p {
+            color: var(--text-muted);
+            font-size: 13.5px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .info-item {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            padding: 12px 14px;
+            border-radius: 8px;
+        }
+        .info-item label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .info-item value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #38bdf8;
+        }
+        .token-box {
+            margin-bottom: 20px;
+        }
+        .token-box label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .token-area {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #a7f3d0;
+            word-break: break-all;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .btn-logout {
+            background: transparent;
+            color: #f87171;
+            border: 1px solid #ef4444;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.15);
+        }
+        .error-card {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: #fca5a5;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="card" id="app">
+        <div class="loading-box" id="loading">
+            <div class="spinner"></div>
+            <p>Đang trao đổi Authorization Code và lấy Token qua chuẩn PKCE...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <div class="success-header">
+                <div class="avatar" id="avatarIcon">U</div>
+                <div class="user-meta">
+                    <h2 id="fullNameDisplay">Người dùng</h2>
+                    <p id="emailDisplay">email@example.com</p>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>User ID (sub)</label>
+                    <value id="userIdDisplay">--</value>
+                </div>
+                <div class="info-item">
+                    <label>Username</label>
+                    <value id="usernameDisplay">--</value>
+                </div>
+                <div class="info-item">
+                    <label>Token Type</label>
+                    <value id="tokenTypeDisplay">Bearer</value>
+                </div>
+                <div class="info-item">
+                    <label>Expires In</label>
+                    <value id="expiresInDisplay">3600 seconds</value>
+                </div>
+            </div>
+
+            <div class="token-box">
+                <label>Access Token (JWT RS256 - Dùng để gọi API /userinfo):</label>
+                <div class="token-area" id="accessTokenDisplay"></div>
+            </div>
+
+            <div class="token-box" id="idTokenContainer">
+                <label>ID Token (OIDC Token chứa thông tin Profile):</label>
+                <div class="token-area" id="idTokenDisplay"></div>
+            </div>
+
+            <button class="btn-logout" id="logoutBtn">Đăng xuất & Quay về trang chủ</button>
+        </div>
+
+        <div id="errorBox" class="error-card" style="display: none;">
+            <h3 style="margin-bottom: 8px;">❌ Xác thực thất bại</h3>
+            <p id="errorMessage">Đã xảy ra lỗi trong quá trình xác thực.</p>
+            <a href="/index.html" style="color: #60a5fa; font-size: 13px; display: inline-block; margin-top: 14px;">Quay lại đăng nhập</a>
+        </div>
+    </div>
+
+    <script>
+        async function handleCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+            const errorDescription = urlParams.get('error_description');
+
+            if (error) {
+                showError(errorDescription || error);
+                return;
+            }
+
+            if (!code) {
+                showError("Không tìm thấy mã authorization_code trên URL callback.");
+                return;
+            }
+
+            // 1. Kiểm tra state chống tấn công CSRF
+            const storedState = sessionStorage.getItem('pkce_state');
+            if (state && storedState && state !== storedState) {
+                showError("Cảnh báo bảo mật: Mã state không khớp! Có thể bạn đang bị tấn công CSRF.");
+                return;
+            }
+
+            // 2. Lấy code_verifier từ sessionStorage
+            const codeVerifier = sessionStorage.getItem('pkce_code_verifier');
+            if (!codeVerifier) {
+                showError("Không tìm thấy pkce_code_verifier trong session của trình duyệt.");
+                return;
+            }
+
+            try {
+                // 3. Gửi request đổi Code lấy Access Token (POST /oauth/token)
+                const tokenEndpoint = 'http://localhost:8080/oauth/token';
+                const redirectUri = window.location.origin + '/callback.html';
+
+                const bodyData = new URLSearchParams();
+                bodyData.append('grant_type', 'authorization_code');
+                bodyData.append('code', code);
+                bodyData.append('redirect_uri', redirectUri);
+                bodyData.append('client_id', 'demo-client');
+                bodyData.append('code_verifier', codeVerifier);
+
+                const tokenResponse = await fetch(tokenEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: bodyData.toString()
+                });
+
+                if (!tokenResponse.ok) {
+                    const errJson = await tokenResponse.json();
+                    throw new Error(errJson.error_description || "Lỗi khi trao đổi token");
+                }
+
+                const tokenData = await tokenResponse.json();
+
+                // 4. Gọi /userinfo với Access Token vừa nhận
+                const userInfoResponse = await fetch('http://localhost:8080/userinfo', {
+                    headers: {
+                        'Authorization': 'Bearer ' + tokenData.access_token
+                    }
+                });
+
+                let userInfo = {};
+                if (userInfoResponse.ok) {
+                    userInfo = await userInfoResponse.json();
+                }
+
+                // 5. Hiển thị thông tin lên màn hình
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                document.getElementById('fullNameDisplay').textContent = userInfo.name || userInfo.preferred_username || "User";
+                document.getElementById('emailDisplay').textContent = userInfo.email || "Không có email";
+                document.getElementById('userIdDisplay').textContent = userInfo.sub || "--";
+                document.getElementById('usernameDisplay').textContent = userInfo.preferred_username || "--";
+                document.getElementById('tokenTypeDisplay').textContent = tokenData.token_type || "Bearer";
+                document.getElementById('expiresInDisplay').textContent = (tokenData.expires_in || 3600) + " giây";
+                document.getElementById('accessTokenDisplay').textContent = tokenData.access_token;
+
+                if (tokenData.id_token) {
+                    document.getElementById('idTokenDisplay').textContent = tokenData.id_token;
+                } else {
+                    document.getElementById('idTokenContainer').style.display = 'none';
+                }
+
+                const nameInitial = (userInfo.name || userInfo.preferred_username || "U").charAt(0).toUpperCase();
+                document.getElementById('avatarIcon').textContent = nameInitial;
+
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('errorBox').style.display = 'block';
+            document.getElementById('errorMessage').textContent = msg;
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.clear();
+            window.location.href = '/index.html';
+        });
+
+        // Tự động kích hoạt khi mở trang callback
+        handleCallback();
+    </script>
+</body>
+</html>

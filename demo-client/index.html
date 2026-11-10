@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Client Application - MiniAuth Demo</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 580px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        h1 {
+            font-size: 26px;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        p {
+            color: var(--text-muted);
+            font-size: 14.5px;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .feature-box {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: left;
+            margin-bottom: 28px;
+            font-size: 13px;
+        }
+        .feature-box ul {
+            list-style: none;
+        }
+        .feature-box li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            color: #cbd5e1;
+        }
+        .feature-box li:last-child { margin-bottom: 0; }
+        .feature-box span { margin-right: 10px; font-size: 16px; }
+        .btn-login {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.4);
+        }
+        .btn-login:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        .footer-text {
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span class="badge">OAuth 2.0 / OIDC Public Client</span>
+        <h1>Demo Client Web Application</h1>
+        <p>
+            Đây là ứng dụng Web Client mẫu (Single Page App) minh họa cách tích hợp chuẩn xác luồng 
+            <b>Authorization Code Grant với PKCE (RFC 7636)</b> vào hệ thống <b>MiniAuth IAM Server</b>.
+        </p>
+
+        <div class="feature-box">
+            <ul>
+                <li><span>🛡️</span> <b>PKCE S256:</b> Tự động sinh chuỗi <code>code_verifier</code> và băm SHA-256 trên trình duyệt.</li>
+                <li><span>🔄</span> <b>Single Sign-On:</b> Chuyển hướng sang MiniAuth để đăng nhập và xin quyền.</li>
+                <li><span>🔑</span> <b>JWT RS256:</b> Nhận Access Token và ID Token chuẩn RFC 7519.</li>
+            </ul>
+        </div>
+
+        <button id="loginBtn" class="btn-login">
+            <span>🔑</span> Đăng nhập với MiniAuth
+        </button>
+
+        <div class="footer-text">
+            Client ID: <code>demo-client</code> | Callback: <code>http://localhost:3000/callback.html</code>
+        </div>
+    </div>
+
+    <script>
+        // Sinh chuỗi ngẫu nhiên an toàn bằng Web Crypto API
+        function generateRandomString(length) {
+            const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+            let result = '';
+            const values = new Uint8Array(length);
+            window.crypto.getRandomValues(values);
+            for (let i = 0; i < length; i++) {
+                result += charset[values[i] % charset.length];
+            }
+            return result;
+        }
+
+        // Băm SHA-256 và mã hóa Base64URL (RFC 7636)
+        async function generateCodeChallenge(verifier) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(verifier);
+            const digest = await window.crypto.subtle.digest('SHA-256', data);
+            return btoa(String.fromCharCode(...new Uint8Array(digest)))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const authServerUrl = 'http://localhost:8080/oauth/authorize';
+            const clientId = 'demo-client';
+            const redirectUri = window.location.origin + '/callback.html';
+            const scope = 'openid profile email';
+            
+            // 1. Sinh code_verifier (chuỗi bí mật ban đầu) và state
+            const codeVerifier = generateRandomString(64);
+            const state = generateRandomString(16);
+
+            // 2. Tính toán code_challenge = Base64URL(SHA-256(code_verifier))
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+            // 3. Lưu vào sessionStorage để đối chiếu ở trang callback
+            sessionStorage.setItem('pkce_code_verifier', codeVerifier);
+            sessionStorage.setItem('pkce_state', state);
+
+            // 4. Chuyển hướng sang MiniAuth Server
+            const authorizeUrl = new URL(authServerUrl);
+            authorizeUrl.searchParams.set('client_id', clientId);
+            authorizeUrl.searchParams.set('redirect_uri', redirectUri);
+            authorizeUrl.searchParams.set('response_type', 'code');
+            authorizeUrl.searchParams.set('scope', scope);
+            authorizeUrl.searchParams.set('state', state);
+            authorizeUrl.searchParams.set('code_challenge', codeChallenge);
+            authorizeUrl.searchParams.set('code_challenge_method', 'S256');
+
+            window.location.href = authorizeUrl.toString();
+        });
+    </script>
+</body>
+</html>
