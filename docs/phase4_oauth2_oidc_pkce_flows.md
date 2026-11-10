@@ -1,6 +1,6 @@
 # 🔄 Giai đoạn 4: Chuẩn OAuth 2.0 / OIDC Flow & Cơ chế PKCE
 
-> **Trạng thái**: 📋 **CHỜ XỬ LÝ (THEO KẾ HOẠCH)**  
+> **Trạng thái**:  **HOÀN THÀNH**  
 > **Kiến thức kế thừa**: `gravitee-am-gateway-handler-oidc`
 
 ---

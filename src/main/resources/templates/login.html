@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - MiniAuth</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 36px 32px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+        .logo-box {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .logo-box h1 {
+            font-size: 24px;
+            color: #60a5fa;
+            letter-spacing: -0.5px;
+        }
+        .logo-box p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--danger);
+            color: #fca5a5;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px 14px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: var(--primary);
+        }
+        .btn-submit {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover {
+            background: var(--primary-hover);
+        }
+        .footer-hint {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo-box">
+            <h1>🛡️ MiniAuth IAM</h1>
+            <p>Đăng nhập vào <span th:text="${clientName != null ? clientName : 'Ứng dụng Client'}">Demo App</span></p>
+        </div>
+
+        <div th:if="${error != null}" class="alert-error" th:text="${error}">
+            Tài khoản hoặc mật khẩu không chính xác
+        </div>
+
+        <form action="/oauth/authorize/login" method="POST">
+            <!-- Hidden OAuth context params -->
+            <input type="hidden" name="client_id" th:value="${clientId}" />
+            <input type="hidden" name="redirect_uri" th:value="${redirectUri}" />
+            <input type="hidden" name="scope" th:value="${scope}" />
+            <input type="hidden" name="state" th:value="${state}" />
+            <input type="hidden" name="code_challenge" th:value="${codeChallenge}" />
+            <input type="hidden" name="code_challenge_method" th:value="${codeChallengeMethod}" />
+
+            <div class="form-group">
+                <label for="username">Tên đăng nhập (Username / Email)</label>
+                <input type="text" id="username" name="username" placeholder="Ví dụ: john_doe" required autofocus />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required />
+            </div>
+
+            <button type="submit" class="btn-submit">Đăng nhập</button>
+        </form>
+
+        <div class="footer-hint">
+            Tài khoản mẫu: <b>john_doe</b> / Mật khẩu: <b>password123</b>
+        </div>
+    </div>
+</body>
+</html>
