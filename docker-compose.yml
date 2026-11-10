@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # 1. Cơ sở dữ liệu PostgreSQL (Production-ready Reactive Database)
+  postgres:
+    image: postgres:16-alpine
+    container_name: miniauth-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: miniauth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d miniauth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. MiniAuth Authorization Server (Spring Boot WebFlux Reactive Engine)
+  miniauth-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: miniauth-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/miniauth
+      SPRING_R2DBC_USERNAME: postgres
+      SPRING_R2DBC_PASSWORD: secretpassword
+      MINIAUTH_ISSUER: http://localhost:8080
+    ports:
+      - "8080:8080"
+
+  # 3. Demo Client Application (Single Page App chạy qua Nginx)
+  demo-client:
+    image: nginx:alpine
+    container_name: miniauth-demo-client
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - ./demo-client:/usr/share/nginx/html:ro
+
+volumes:
+  postgres_data:
